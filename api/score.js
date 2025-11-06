@@ -41,8 +41,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ feedback });
   } catch (err) {
-  console.error("Relay error:", err);
-  return res.status(500).json({ error: err.message || err });
+  console.error("Relay function error:", err);
+  res.status(500).json({ error: err.message || err.toString() });
 }
 }
 
