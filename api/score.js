@@ -1,48 +1,44 @@
-res.setHeader("Access-Control-Allow-Origin", "*");
-res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-// Handle preflight requests
-if (req.method === "OPTIONS") {
-  return res.status(200).end();
-}
 import OpenAI from "openai";
 
-// Make sure you have OPENAI_API_KEY set in Vercel
-const client = new OpenAI({ apiKey: process.env.StorylineAPIKey });
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  // CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  const { secret, question, userAnswer, modelAnswer } = req.body;
-
-  // Check the relay secret
-  if (secret !== process.env.RELAY_SECRET) {
-    return res.status(401).json({ error: "Unauthorized" });
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
 
   try {
-    const prompt = `
-    Question: ${question}
-    Model answer: ${modelAnswer}
-    Learner answer: ${userAnswer}
-    Provide concise feedback highlighting correctness and improvement areas.
-    `;
+    const { secret, question, userAnswer, modelAnswer } = req.body;
+
+    if (secret !== process.env.RELAY_SECRET) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const client = new OpenAI({ apiKey: process.env.StorylineAPIKey });
 
     const completion = await client.chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 200
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert business tutor providing feedback on short answers."
+        },
+        {
+          role: "user",
+          content: `Question: ${question}\nModel answer: ${modelAnswer}\nStudent answer: ${userAnswer}\nProvide constructive feedback.`
+        }
+      ],
+      temperature: 0.7,
     });
 
-    const feedback = completion.choices[0].message.content.trim();
+    const feedback = completion.choices[0].message.content;
 
-    return res.status(200).json({ feedback });
+    res.status(200).json({ feedback });
   } catch (err) {
-  console.error("Relay function error:", err);
-  res.status(500).json({ error: err.message || err.toString() });
+    console.error("Relay function error:", err);
+    res.status(500).json({ error: err.message || err.toString() });
+  }
 }
-}
-
