@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     // Send prompt to OpenAI
     const completion = await client.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
