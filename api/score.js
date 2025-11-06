@@ -9,7 +9,7 @@ if (req.method === "OPTIONS") {
 import OpenAI from "openai";
 
 // Make sure you have OPENAI_API_KEY set in Vercel
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.StorylineAPIKey });
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
